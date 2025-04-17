@@ -4,15 +4,15 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Handlers
-func getBooks(c fiber.Ctx) error {
+func getBooks(c *fiber.Ctx) error {
 	return c.JSON(books)
 }
 
-func getBook(c fiber.Ctx) error {
+func getBook(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
@@ -27,10 +27,10 @@ func getBook(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotFound)
 }
 
-func createBook(c fiber.Ctx) error {
+func createBook(c *fiber.Ctx) error {
 	book := new(Book)
 
-	if err := c.Bind().Body(book); err != nil {
+	if err := c.BodyParser(book); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
@@ -50,14 +50,14 @@ func createBook(c fiber.Ctx) error {
 	return c.JSON(book)
 }
 
-func updateBook(c fiber.Ctx) error {
+func updateBook(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 
 	bookUpdate := new(Book)
-	if err := c.Bind().Body(bookUpdate); err != nil {
+	if err := c.BodyParser(bookUpdate); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
@@ -73,7 +73,7 @@ func updateBook(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotFound)
 }
 
-func deleteBook(c fiber.Ctx) error {
+func deleteBook(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)

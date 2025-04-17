@@ -4,9 +4,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 	"github.com/joho/godotenv"
+
+	jwtware "github.com/gofiber/jwt/v4"
 )
 
 // Book struct to hold book data
@@ -17,6 +19,17 @@ type Book struct {
 }
 
 var books []Book // Slice to store books
+
+// Dummy user for example
+type User = struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+var member = User{
+	Email:    "user@email.com",
+	Password: "123456",
+}
 
 func main() {
 
@@ -38,23 +51,14 @@ func main() {
 	books = append(books, Book{ID: 1, Title: "1984", Author: "George Orwell"})
 	books = append(books, Book{ID: 2, Title: "The Great Gatsby", Author: "F. Scott Fitzgerald"})
 
-	// Define a route for the GET method on the root path '/'
-	app.Get("/", func(c fiber.Ctx) error {
+	// Public route ["/", "/html-test"]
+	app.Get("/", func(c *fiber.Ctx) error {
 		// Send a string response to the client
 		return c.SendString("Hello, World 👋!")
 	})
 
-	// CRUD routes
-	app.Get("/books", getBooks)
-	app.Get("/book/:id", getBook)
-	app.Post("/book", createBook)
-	app.Put("/book/:id", updateBook)
-	app.Delete("/book/:id", deleteBook)
-
-	app.Post("/upload", uploadFile)
-
 	// Render HTML template
-	app.Get("/html-test", func(c fiber.Ctx) error {
+	app.Get("/html-test", func(c *fiber.Ctx) error {
 		// Render index template
 		return c.Render("index", fiber.Map{
 			"Title":       "Go Fiber Template Example",
@@ -63,6 +67,29 @@ func main() {
 		})
 	})
 
+	// Login
+	app.Post("/login", login)
+
+	// JWT Middleware
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{
+			Key: []byte(os.Getenv("JWT_SECRET_KEY")),
+		},
+	}))
+
+	// Protected route
+	app.Use(checkMiddleware)
+
+	// CRUD routes
+	app.Get("/books", getBooks)
+	app.Get("/book/:id", getBook)
+	app.Post("/book", createBook)
+	app.Put("/book/:id", updateBook)
+	app.Delete("/book/:id", deleteBook)
+
+	// Upload file
+	app.Post("/upload", uploadFile)
+
 	// Get environment variables
 	app.Get("/env", getEnv)
 
@@ -70,8 +97,7 @@ func main() {
 	log.Fatal(app.Listen(":3000"))
 }
 
-// Upload Image file
-func uploadFile(c fiber.Ctx) error {
+func uploadFile(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
@@ -86,7 +112,7 @@ func uploadFile(c fiber.Ctx) error {
 }
 
 // get environment variables
-func getEnv(c fiber.Ctx) error {
+func getEnv(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"SECRET_KEY": os.Getenv("SECRET_KEY"),
 	})
