@@ -8,6 +8,18 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// login godoc
+// @Summary User login
+// @Description Authenticate user and return JWT token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param user body User true "User credentials"
+// @Success 200 {object} map[string]string "token and message"
+// @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /login [post]
 func login(c *fiber.Ctx) error {
 	user := new(User)
 	if err := c.BodyParser(user); err != nil {
